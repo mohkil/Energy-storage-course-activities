@@ -1285,7 +1285,7 @@ function HostApp({ session, onUpdateSession, onEndSession }) {
     await sSet(K(code, "scores"), newScores);
     await sSet(K(code, "showcase", game.roundIdx), showcaseData);
     await setPhase({ phase: "reveal", roundIdx: game.roundIdx, presetId, startTs: 0 });
-    logRound(game.roundIdx).catch(() => {});
+    logRound(game.roundIdx).catch(() => { });
     setBusy(false);
   };
 
@@ -1388,7 +1388,7 @@ function HostApp({ session, onUpdateSession, onEndSession }) {
           try {
             const parsed = typeof r.data_json === "string" ? JSON.parse(r.data_json) : r.data_json;
             if (parsed && (parsed.event_type || parsed.event_seq)) allClicks.push(parsed);
-          } catch (e) {}
+          } catch (e) { }
         });
       }
     } catch (e) {
@@ -1655,7 +1655,7 @@ function HostApp({ session, onUpdateSession, onEndSession }) {
 
         <div style={{ marginTop: 34 }}>
           <Btn onClick={reveal} disabled={busy} variant="teal">
-            Close submissions & reveal
+            Close submissions
           </Btn>
         </div>
       </Shell>
@@ -1916,9 +1916,9 @@ function TeamApp({ session, onUpdateSession, onEndSession }) {
     const isComplete = Boolean(curA && curC && curE);
     const b = isComplete ? buildCell(curA, curC, curE) : null;
     const itemObj = itemKind === "anode" ? ANODES.find((m) => m.id === itemId)
-                  : itemKind === "cathode" ? CATHODES.find((m) => m.id === itemId)
-                  : itemKind === "elyte" ? ELYTES.find((m) => m.id === itemId)
-                  : null;
+      : itemKind === "cathode" ? CATHODES.find((m) => m.id === itemId)
+        : itemKind === "elyte" ? ELYTES.find((m) => m.id === itemId)
+          : null;
 
     const currentScore = b && b.viable ? scoreCell(b, round) : 0;
     const deltaScore = currentScore - lastScore.current;
@@ -1998,7 +1998,7 @@ function TeamApp({ session, onUpdateSession, onEndSession }) {
     pendingBatch.current.push(row);
 
     // Save full live trace buffer in live_session_store under esca-ABCD-trace-roundIdx-teamId
-    sSet(K(code, "trace", game.roundIdx, teamId.current), traceEvents.current).catch(() => {});
+    sSet(K(code, "trace", game.roundIdx, teamId.current), traceEvents.current).catch(() => { });
 
     // Debounce batch send to Cloudflare D1 results_log (flushes every 1.5 seconds)
     if (batchTimer.current) clearTimeout(batchTimer.current);
@@ -2321,7 +2321,7 @@ function setTabMode(mode) {
       sessionStorage.removeItem(TAB_MODE_KEY);
       if (window.location.hash) history.replaceState(null, "", window.location.pathname + window.location.search);
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function getStoredHostSession() {
@@ -2346,7 +2346,7 @@ function saveStoredHostSession(data) {
       localStorage.removeItem(HOST_SESSION_KEY);
       sessionStorage.removeItem(HOST_SESSION_KEY);
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function getStoredTeamSession() {
@@ -2367,7 +2367,7 @@ function saveStoredTeamSession(data) {
       localStorage.removeItem(TEAM_SESSION_KEY);
       sessionStorage.removeItem(TEAM_SESSION_KEY);
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function EnergyStorageCourseActivities() {
