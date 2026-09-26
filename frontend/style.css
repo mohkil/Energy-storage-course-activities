@@ -481,35 +481,66 @@ input:focus-visible {
 }
 
 /* --------------------------------------------------------------------------
-   12. Scenario Illustrations & Media
+   12. Scenario Illustrations & Media (Projector-Optimized)
    -------------------------------------------------------------------------- */
 .scenario-card {
   background: var(--panel);
   border: 1.5px solid var(--line);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: 26px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.scenario-img-wrapper {
+  width: 100%;
+  min-height: 320px;
+  max-height: 480px;
+  background: #070b12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1.5px solid var(--line);
+  overflow: hidden;
 }
 
 .scenario-img {
   width: 100%;
-  height: 260px;
-  object-fit: cover;
+  height: auto;
+  min-height: 280px;
+  max-height: 480px;
+  object-fit: contain;
   display: block;
-  border-bottom: 1.5px solid var(--line);
 }
 
 .scenario-brief {
-  font-size: 22px;
-  line-height: 1.5;
-  padding: 22px 26px;
+  font-size: clamp(20px, 1.8vw, 25px);
+  line-height: 1.55;
+  padding: 24px 28px;
   margin: 0;
   color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 1100px) {
+  .scenario-img-wrapper {
+    min-height: 380px;
+    max-height: 520px;
+  }
+  .scenario-img {
+    min-height: 340px;
+    max-height: 520px;
+  }
 }
 
 @media (max-width: 600px) {
+  .scenario-img-wrapper {
+    min-height: 180px;
+    max-height: 220px;
+  }
   .scenario-img {
-    height: 190px;
+    min-height: 180px;
+    max-height: 220px;
   }
   .scenario-brief {
     font-size: 17px;

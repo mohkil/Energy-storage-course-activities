@@ -766,12 +766,14 @@ function ScenarioPhoto({ imageFile, title }) {
   if (!imageFile || imgError) return null;
 
   return (
-    <img
-      src={IMG_BASE + imageFile}
-      alt={title || "Scenario brief illustration"}
-      className="scenario-img"
-      onError={() => setImgError(true)}
-    />
+    <div className="scenario-img-wrapper">
+      <img
+        src={IMG_BASE + imageFile}
+        alt={title || "Scenario brief illustration"}
+        className="scenario-img"
+        onError={() => setImgError(true)}
+      />
+    </div>
   );
 }
 
@@ -1066,6 +1068,7 @@ function HostApp({ session, onUpdateSession, onEndSession }) {
   const [traceCsvText, setTraceCsvText] = useState(null);
   const [traceCsvNote, setTraceCsvNote] = useState("");
   const [logged, setLogged] = useState(0);
+  const [finalTab, setFinalTab] = useState("podium"); // "podium" for class celebration on projector, "exports" for post-standings data export
   const [authed, setAuthed] = useState(!!(session && session.authed));
   const [pw, setPw] = useState("");
   const [authErr, setAuthErr] = useState("");
@@ -1731,57 +1734,110 @@ function HostApp({ session, onUpdateSession, onEndSession }) {
 
   // Screen 6: Final Standings & Data Export (Strictly Guarded)
   if (game && game.phase === "final") {
+    // Sub-view B: Post-Session Data, Research Analytics & CSV Exports
+    if (finalTab === "exports") {
+      return (
+        <Shell wide>
+          <div style={{ marginBottom: 26, paddingTop: 16 }}>
+            <Eyebrow color={T.teal}>Post-Session Archive & Analytics</Eyebrow>
+            <h2 style={{ fontFamily: T.display, fontSize: 36, margin: "6px 0 10px" }}>Session Data & Telemetry Exports 📊</h2>
+            <p style={{ color: T.muted, fontSize: 15.5 }}>
+              Download complete team design submissions and granular clickstream interaction logs for session <strong style={{ color: T.ink }}>[{code || "OFFLINE"}]</strong>.
+            </p>
+          </div>
+
+          <div style={{ background: T.panel, border: `1.5px solid ${T.line}`, borderRadius: 14, padding: "24px 26px", marginBottom: 28, boxShadow: "0 6px 20px rgba(0,0,0,0.2)" }}>
+            <Eyebrow>Data Collection Status</Eyebrow>
+            <p style={{ color: T.muted, fontSize: 14.5, lineHeight: 1.5, marginBottom: 12 }}>
+              Every team's design, its computed cell metrics (voltage, capacity, Wh/kg), duration taken, and number of explored combinations — one row per submission.
+            </p>
+            <p style={{ color: logged ? T.teal : T.muted, fontSize: 14, marginBottom: 18 }}>
+              {logged
+                ? `✓ ${logged} rows saved to Cloudflare results_log on the server.`
+                : "Server-side logging is off or unreachable — use the direct export buttons below to download the CSV files."}
+            </p>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
+              <Btn variant="teal" onClick={exportCSV} disabled={busy}>{busy ? "Collecting…" : "Export Submissions CSV"}</Btn>
+              <Btn variant="primary" onClick={exportClickstreamCSV} disabled={busy}>{busy ? "Collecting…" : "📊 Export Clickstream Telemetry CSV"}</Btn>
+            </div>
+            {csvNote && <div style={{ color: T.volt, fontSize: 13.5, marginTop: 14 }}>{csvNote}</div>}
+            {csvText && (
+              <textarea
+                readOnly
+                value={csvText}
+                onFocus={(e) => e.target.select()}
+                style={{
+                  width: "100%", height: 130, marginTop: 10, fontFamily: T.mono, fontSize: 11.5,
+                  background: T.bg, color: T.ink, border: `1.5px solid ${T.line}`, borderRadius: 8, padding: 10
+                }}
+              />
+            )}
+            {traceCsvNote && <div style={{ color: T.teal, fontSize: 13.5, marginTop: 14 }}>{traceCsvNote}</div>}
+            {traceCsvText && (
+              <textarea
+                readOnly
+                value={traceCsvText}
+                onFocus={(e) => e.target.select()}
+                style={{
+                  width: "100%", height: 160, marginTop: 10, fontFamily: T.mono, fontSize: 11.5,
+                  background: T.bg, color: T.ink, border: `1.5px solid ${T.line}`, borderRadius: 8, padding: 10
+                }}
+              />
+            )}
+          </div>
+
+          <div style={{ display: "flex", gap: 14, justifyContent: "space-between", flexWrap: "wrap", alignItems: "center" }}>
+            <Btn variant="ghost" onClick={() => setFinalTab("podium")} style={{ border: `1.5px solid ${T.line}` }}>
+              ◀ Back to Final Standings
+            </Btn>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <Btn onClick={() => { setFinalTab("podium"); createGame(presetId); }} disabled={busy}>Restart Activity</Btn>
+              <Btn variant="teal" onClick={() => { setCode(null); setGame(null); setTeams({}); onUpdateSession({ authed: true, hostToken: HOST_TOKEN, code: null, presetId: null }); }}>
+                Close & Pick Activity
+              </Btn>
+              <Btn variant="ghost" onClick={onEndSession}>Main Menu</Btn>
+            </div>
+          </div>
+        </Shell>
+      );
+    }
+
+    // Sub-view A: Clean Projector Standings & Podium (No Raw Data Buttons)
     return (
       <Shell wide>
         <div style={{ textAlign: "center", marginBottom: 30, paddingTop: 20 }}>
-          <Eyebrow color={T.volt}>Final standings</Eyebrow>
-          <h2 style={{ fontFamily: T.display, fontSize: 44 }}>Consultancy of the year 🏆</h2>
+          <Eyebrow color={T.volt}>Final Standings</Eyebrow>
+          <h2 style={{ fontFamily: T.display, fontSize: 46, margin: "8px 0 10px" }}>Consultancy of the Year 🏆</h2>
+          <p style={{ color: T.muted, fontSize: 16 }}>All 5 engineering design rounds complete · Official final leaderboard</p>
         </div>
+
         <Leaderboard scores={scores} />
 
-        <div style={{ marginTop: 34, background: T.panel, border: `1.5px solid ${T.line}`, borderRadius: 12, padding: "18px 20px" }}>
-          <Eyebrow>Session data</Eyebrow>
-          <p style={{ color: T.muted, fontSize: 14.5, lineHeight: 1.5, marginBottom: 14 }}>
-            Every team's design, its computed cell metrics, duration taken, and number of explored combinations — one row per submission.
-          </p>
-          <p style={{ color: logged ? T.teal : T.muted, fontSize: 13.5, marginBottom: 14 }}>
-            {logged
-              ? `✓ ${logged} rows saved to Cloudflare results_log on the server.`
-              : "Server-side logging is off or unreachable — use the button below to download the CSV directly."}
-          </p>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-            <Btn variant="teal" onClick={exportCSV} disabled={busy}>{busy ? "Collecting…" : "Export Submissions CSV"}</Btn>
-            <Btn variant="primary" onClick={exportClickstreamCSV} disabled={busy}>{busy ? "Collecting…" : "📊 Export Clickstream Telemetry CSV"}</Btn>
+        <div style={{
+          marginTop: 36,
+          padding: "20px 24px",
+          background: T.panel,
+          border: `1.5px solid ${T.line}`,
+          borderRadius: 14,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 16,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.2)"
+        }}>
+          <div>
+            <div style={{ fontFamily: T.display, fontSize: 18, fontWeight: 700 }}>Activity Concluded</div>
+            <div style={{ color: T.muted, fontSize: 14, marginTop: 2 }}>Ready to inspect and archive session telemetry and student designs?</div>
           </div>
-          {csvNote && <div style={{ color: T.volt, fontSize: 13.5, marginTop: 12 }}>{csvNote}</div>}
-          {csvText && (
-            <textarea
-              readOnly
-              value={csvText}
-              onFocus={(e) => e.target.select()}
-              style={{
-                width: "100%", height: 130, marginTop: 10, fontFamily: T.mono, fontSize: 11.5,
-                background: T.bg, color: T.ink, border: `1.5px solid ${T.line}`, borderRadius: 8, padding: 10
-              }}
-            />
-          )}
-          {traceCsvNote && <div style={{ color: T.teal, fontSize: 13.5, marginTop: 12 }}>{traceCsvNote}</div>}
-          {traceCsvText && (
-            <textarea
-              readOnly
-              value={traceCsvText}
-              onFocus={(e) => e.target.select()}
-              style={{
-                width: "100%", height: 160, marginTop: 10, fontFamily: T.mono, fontSize: 11.5,
-                background: T.bg, color: T.ink, border: `1.5px solid ${T.line}`, borderRadius: 8, padding: 10
-              }}
-            />
-          )}
+          <Btn variant="teal" onClick={() => setFinalTab("exports")}>
+            Proceed to Data Export & Archival ➔
+          </Btn>
         </div>
 
-        <div style={{ marginTop: 30, display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-          <Btn onClick={() => createGame(presetId)} disabled={busy}>Restart Activity</Btn>
-          <Btn variant="teal" onClick={() => { setCode(null); setGame(null); setTeams({}); onUpdateSession({ authed: true, hostToken: HOST_TOKEN, code: null, presetId: null }); }}>
+        <div style={{ marginTop: 26, display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+          <Btn onClick={() => { setFinalTab("podium"); createGame(presetId); }} disabled={busy}>Restart Activity</Btn>
+          <Btn variant="ghost" style={{ border: `1.5px solid ${T.line}` }} onClick={() => { setCode(null); setGame(null); setTeams({}); onUpdateSession({ authed: true, hostToken: HOST_TOKEN, code: null, presetId: null }); }}>
             Close & Pick Activity
           </Btn>
           <Btn variant="ghost" onClick={onEndSession}>Main Menu</Btn>
