@@ -181,10 +181,10 @@ const DEFAULT_SCENARIOS = [
     preset_label: "Battery Builder", preset_desc: "5 design rounds: pick anode, cathode, electrolyte against client briefs"
   },
   {
-    id: "5", order: 5, title: "Round 5: Rainforest Wildlife Monitoring Network",
-    brief: "A wildlife conservation organisation plans to deploy 500 camera and acoustic monitoring stations deep in a tropical rainforest. Each station must operate for at least five years with minimal maintenance and remain functional through several cloudy days. The client was thinking about solar-powered stations but is open to other possibilities.",
+    id: "5", order: 5, title: "Round 5: Sterile dose-tracking patch",
+    brief: "DoseTrace Medical needs a thin cell for a disposable patch that records handling conditions and drives a small display. Stable voltage matters for accurate sensing. The patch is body worn, so leakage control and skin safety are essential. Cost matters at production scale, while power draw is very small and recharging is unnecessary.",
     image_file: "scenario_5.png", seconds: 180,
-    weights: { energy: 0.25, cost: 0.10, safety: 0.30, power: 0.05, lifespan: 0.30 },
+    weights: { energy: 0.20, cost: 0.15, safety: 0.30, power: 0.10, lifespan: 0.25 },
     requireRecharge: false, reveal: "", best1: "", best2: "",
     preset_label: "Battery Builder", preset_desc: "5 design rounds: pick anode, cathode, electrolyte against client briefs"
   },
