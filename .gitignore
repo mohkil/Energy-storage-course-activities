@@ -1,0 +1,18 @@
+# Sensitive scenario benchmark answers & drafts (must never be public)
+Max-scenarios/
+archive/
+docs/
+backend/
+tests/
+*.sql
+
+# Python cache & temporary test artifacts
+__pycache__/
+*.pyc
+.system_generated/
+
+# Legacy local files
+index1.html
+api.php
+cw-data/
+esca-data/

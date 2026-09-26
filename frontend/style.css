@@ -1,0 +1,736 @@
+/* ==========================================================================
+   Energy Storage Course Activities — Stylesheet
+   Course: GSOE9111 / ENGG4111 Energy Storage (UNSW)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design Tokens & CSS Variables
+   -------------------------------------------------------------------------- */
+:root {
+  /* Color Palette */
+  --bg: #10162B;
+  --panel: #1A2240;
+  --panel-soft: #212A4E;
+  --line: #2C3560;
+  --ink: #F2F4FB;
+  --muted: #8A93B8;
+  --volt: #FFD23F;
+  --teal: #3EC9C0;
+  --red: #F06A5D;
+
+  /* Typography */
+  --font-display: 'Space Grotesk', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* Spacing & Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+}
+
+/* --------------------------------------------------------------------------
+   2. Base & Reset
+   -------------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+#boot {
+  color: var(--muted);
+  font-family: var(--font-body);
+  padding: 60px 20px;
+  text-align: center;
+  font-size: 18px;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  background: none;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--volt);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Animations
+   -------------------------------------------------------------------------- */
+@keyframes pulseVolt {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. Layout Containers
+   -------------------------------------------------------------------------- */
+.app-shell {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  padding: 24px 16px;
+}
+
+.shell-inner {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.shell-inner.wide {
+  max-width: 1080px;
+}
+
+/* --------------------------------------------------------------------------
+   5. Typography Helpers
+   -------------------------------------------------------------------------- */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 10px;
+}
+
+.eyebrow-volt {
+  color: var(--volt);
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.5;
+  margin-top: 14px;
+}
+
+/* --------------------------------------------------------------------------
+   6. Buttons
+   -------------------------------------------------------------------------- */
+.btn {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  border-radius: var(--radius-md);
+  padding: 14px 26px;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  background: var(--volt);
+  color: #1A1A0A;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.btn-teal {
+  background: var(--teal);
+  color: #062A28;
+}
+
+.btn-teal:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 2px solid var(--line);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--panelSoft);
+}
+
+/* --------------------------------------------------------------------------
+   7. Countdown Timer
+   -------------------------------------------------------------------------- */
+.countdown-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.countdown-track {
+  position: relative;
+  flex: 1;
+  height: 28px;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  padding: 3px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.countdown-track.big {
+  height: 42px;
+}
+
+.countdown-track.low {
+  border-color: var(--red);
+}
+
+.countdown-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--volt);
+  transition: width 0.5s linear;
+}
+
+.countdown-fill.low {
+  background: var(--red);
+  animation: pulseVolt 1s infinite;
+}
+
+.countdown-tip {
+  width: 6px;
+  height: 14px;
+  background: var(--ink);
+  border-radius: 3px;
+}
+
+.countdown-tip.low {
+  background: var(--red);
+}
+
+.countdown-text {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--volt);
+  min-width: 60px;
+  text-align: right;
+}
+
+.countdown-text.big {
+  font-size: 34px;
+  min-width: 90px;
+}
+
+.countdown-text.low {
+  color: var(--red);
+}
+
+/* --------------------------------------------------------------------------
+   8. Stat Chips & Metrics
+   -------------------------------------------------------------------------- */
+.chip-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.stat-chip {
+  background: var(--panel-soft);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  text-align: center;
+  flex: 1;
+  min-width: 80px;
+}
+
+.stat-chip-val {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.stat-chip-val.good {
+  color: var(--teal);
+}
+
+.stat-chip-val.bad {
+  color: var(--red);
+}
+
+.stat-chip-lbl {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   9. Weight Bars
+   -------------------------------------------------------------------------- */
+.weight-bars-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.weight-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.weight-bar-label {
+  width: 130px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.weight-bar-track {
+  flex: 1;
+  height: 9px;
+  background: var(--panel-soft);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.weight-bar-fill {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 5px;
+}
+
+.weight-bar-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--teal);
+  width: 40px;
+  text-align: right;
+}
+
+/* --------------------------------------------------------------------------
+   10. Leaderboard
+   -------------------------------------------------------------------------- */
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.leaderboard-list.compact {
+  gap: 8px;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.leaderboard-rank {
+  font-family: var(--font-mono);
+  color: var(--muted);
+  width: 32px;
+  font-size: 18px;
+}
+
+.leaderboard-rank.first {
+  color: var(--volt);
+}
+
+.leaderboard-content {
+  flex: 1;
+}
+
+.leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.leaderboard-name {
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.leaderboard-name.highlight {
+  color: var(--volt);
+}
+
+.leaderboard-subtext {
+  font-size: 14.5px;
+  color: var(--muted);
+  margin-left: 8px;
+  font-weight: 400;
+}
+
+.leaderboard-pts {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  color: var(--teal);
+}
+
+.leaderboard-bar-track {
+  height: 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 5px;
+  padding: 1.5px;
+}
+
+.leaderboard-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--teal);
+  transition: width 0.6s ease;
+}
+
+.leaderboard-bar-fill.first {
+  background: var(--volt);
+}
+
+/* --------------------------------------------------------------------------
+   11. Materials Selector
+   -------------------------------------------------------------------------- */
+.material-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .material-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.material-card {
+  text-align: left;
+  padding: 11px 13px;
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  border: 2px solid var(--line);
+  color: var(--ink);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.material-card.active {
+  background: var(--panel-soft);
+  border-color: var(--volt);
+}
+
+.material-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.material-stats {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--teal);
+  margin-top: 3px;
+}
+
+.material-card.active .material-stats {
+  color: var(--volt);
+}
+
+.material-tag {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   12. Scenario Illustrations & Media
+   -------------------------------------------------------------------------- */
+.scenario-card {
+  background: var(--panel);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.scenario-img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  display: block;
+  border-bottom: 1.5px solid var(--line);
+}
+
+.scenario-brief {
+  font-size: 22px;
+  line-height: 1.5;
+  padding: 22px 26px;
+  margin: 0;
+  color: var(--ink);
+}
+
+@media (max-width: 600px) {
+  .scenario-img {
+    height: 190px;
+  }
+  .scenario-brief {
+    font-size: 17px;
+    padding: 16px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   13. Form Inputs
+   -------------------------------------------------------------------------- */
+.form-input {
+  width: 100%;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  padding: 14px 16px;
+  font-size: 18px;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease;
+}
+
+.form-input:focus {
+  border-color: var(--volt);
+}
+
+.form-code-input {
+  font-family: var(--font-mono);
+  font-size: 38px;
+  letter-spacing: 0.28em;
+  text-align: center;
+  color: var(--volt);
+  padding: 14px 0;
+}
+
+/* --------------------------------------------------------------------------
+   14. Dynamic QR Code Display (Host Lobby)
+   -------------------------------------------------------------------------- */
+.lobby-qr-card {
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.lobby-qr-svg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.lobby-qr-svg svg {
+  display: block;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.lobby-qr-label {
+  font-size: 13.5px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   15. Timer Pause Controls & States
+   -------------------------------------------------------------------------- */
+.countdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+.btn-pause {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 14.5px;
+  font-weight: 600;
+  background: var(--panel-soft);
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.btn-pause:hover {
+  border-color: var(--volt);
+  color: var(--volt);
+}
+
+.btn-pause.is-paused {
+  background: rgba(255, 210, 63, 0.15);
+  border-color: var(--volt);
+  color: var(--volt);
+}
+
+.countdown-fill.paused {
+  background: var(--muted) !important;
+  animation: none !important;
+}
+
+.countdown-text.paused {
+  color: var(--muted) !important;
+}
+
+.pause-badge {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(255, 210, 63, 0.15);
+  color: var(--volt);
+  border: 1px solid var(--volt);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* --------------------------------------------------------------------------
+   16. CellDesigner Responsive Dock & Mobile Bottom Sheet
+   -------------------------------------------------------------------------- */
+.designer-dock {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg);
+  padding-top: 14px;
+  margin-top: 18px;
+  border-top: 1.5px solid var(--line);
+  z-index: 100;
+}
+
+.dock-mobile-bar {
+  display: none;
+}
+
+.dock-sheet-body {
+  display: block;
+}
+
+@media (max-width: 767px) {
+  .designer-dock {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    background: var(--panel);
+    border-top: 2px solid var(--line);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  .dock-mobile-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    gap: 10px;
+    background: var(--panel);
+    cursor: pointer;
+  }
+
+  .dock-summary {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .dock-metric {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dock-submetric {
+    font-size: 11.5px;
+    color: var(--teal);
+    font-family: var(--font-mono);
+  }
+
+  .dock-toggle-btn {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--volt);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    background: var(--panel-soft);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .dock-sheet-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 14px 16px 20px;
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .dock-sheet-body.collapsed {
+    display: none;
+  }
+
+  /* Padding at the bottom of the form so the sticky dock doesn't obscure content */
+  .cell-designer-container {
+    padding-bottom: 90px;
+  }
+}
