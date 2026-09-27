@@ -416,12 +416,20 @@ function buildCell(aId, cId, eId) {
   let rech = "yes";
   if (c.flags.noRecharge) {
     rech = "no";
-    if (cId === "mno2") notes.push("Mn₂O₃ product detaches from electrode — non-rechargeable (Lecture 6).");
-    if (cId === "ag2o") notes.push("Primary silver-oxide cell — exceptionally flat 1.55 V plateau for precision sensing.");
+    if (cId === "mno2") notes.push("Mn₂O₃ product detaches from electrode — non-rechargeable (Lecture 6). Sloping discharge curve (1.6 V down to 0.9 V).");
+    if (cId === "ag2o") notes.push("Primary silver-oxide cell — exceptionally flat 1.55 V two-phase plateau prevents sensor calibration drift.");
   } else if (c.flags.rechargePoor || a.flags.dendrite || c.flags.shuttle) {
     rech = "poor";
     if (c.flags.shuttle) notes.push("Polysulfide shuttle — capacity fades rapidly each cycle.");
     if (a.flags.dendrite && aId === "zn") notes.push("Zinc anode forms soluble zincate — dendrite risk and shape change on recharge.");
+  }
+
+  // Feasibility & environmental notes
+  if (aId === "fe" && eId === "koh") {
+    notes.push("Iron in alkaline KOH has low H₂ overpotential — spontaneous hydrogen gassing precludes sealed miniature coin/patch cells.");
+  }
+  if (cId === "air") {
+    notes.push("Air breathing cathode requires open ambient vents — incompatible with hermetically sealed sterile skin patches.");
   }
 
   // Multi-attribute safety score out of 5
@@ -479,41 +487,199 @@ function buildCell(aId, cId, eId) {
 }
 
 /**
- * Scores a cell design against a scenario's client weighting factors.
+/**
+ * Simple, Transparent 1000-Point Scoring System
+ * -----------------------------------------------
+ * 1. Viability Check: 0 pts if cell is chemically invalid (electrolysis, negative V, incompatible).
+ * 2. Base Score (0 to 1000 pts): Weighted sum of 5 normalized engineering metrics:
+ *    - Energy (Wh/kg):   energy / 1200 (capped at 1.0)
+ *    - Cost Index:       (10 - cost) / 7 (cheaper materials = higher score, 0 to 1.0)
+ *    - Safety Rating:    safety / 5 (0 to 1.0)
+ *    - Power Rating:     power / 5 (0 to 1.0)
+ *    - Lifespan Rating:  lifespan / 5 (cycle life for secondary, shelf life for primary)
+ * 3. Recharge Multiplier (if secondary required):
+ *    - Fully rechargeable: 1.0x (100% points)
+ *    - Poor cycling/shuttle: 0.5x (50% points)
+ *    - Non-rechargeable: 0.15x (disqualified from secondary applications)
+ * 4. Feasibility Penalty (-200 pts):
+ *    - Applied for physical form-factor impossibilities (e.g. gassing iron in button cells,
+ *      open-air breathing cathodes under sealed adhesive skin patches).
+ * 5. Benchmark Discovery Bonus:
+ *    - +100 pts for primary engineering benchmark (#1)
+ *    - +40 pts for viable secondary runner-up (#2)
+ */
+/**
+ * Simple, Discrete 1000-Point Scoring System
+ * -------------------------------------------
+ * 1. Non-Viable Option (-100 pts):
+ *    - Chemical or thermodynamic failure (cell voltage <= 0, water electrolysis > 2.20V in aqueous,
+ *      or electrode-electrolyte chemical incompatibility).
+ *    - Score: -100 points.
+ *
+ * 2. Non-Feasible Option (0 pts):
+ *    - Viable in theory, but physically impossible in the client's form factor:
+ *      * Round 1 (Hearing aid button cell): Iron anode suffers continuous H2 gassing in KOH,
+ *        bulging and bursting inside the patient's ear canal.
+ *      * Round 5 (Sterile dose patch): Iron anode outgasses H2, or Air cathode breathing vents
+ *        suffocate and flood under a sterile adhesive bandage on sweaty human skin.
+ *    - Score: 0 points.
+ *
+ * 3. Viable, Feasible Options (Base Score: 0, 50, 100, 150, 200 pts):
+ *    - Base score is scaled into discrete increments of 50 based on client requirement closeness:
+ *      * 200 pts: Optimal answer (1st pick benchmark) -> 5 rounds x 200 = 1,000 base pts for a perfect game!
+ *      * 150 pts: Very close / runner-up answer (2nd benchmark, or performance ratio >= 0.90)
+ *      * 100 pts: Moderate match (performance ratio >= 0.70)
+ *      * 50 pts:  Weak match (performance ratio >= 0.45)
+ *      * 0 pts:   Unsuitable / poor match (performance ratio < 0.45)
+ *
+ * 4. Benchmark Discovery Bonus:
+ *    - +100 bonus pts for picking the 1st benchmark chemistry (Total = 200 base + 100 bonus = 300 pts)
+ *    - +50 bonus pts for picking the 2nd benchmark chemistry (Total = 150 base + 50 bonus = 200 pts)
  */
 function scoreCell(build, round) {
-  if (!build || !build.viable) return 0;
-  const isSecondary = round.requireRecharge;
+  // Rule 1: Non-viable option -> -100 pts
+  if (!build || !build.viable) return -100;
+
+  const roundId = String(round.id || "").trim();
+  const aId = build.a ? build.a.id : "";
+  const cId = build.c ? build.c.id : "";
+  const eId = build.e ? build.e.id : "";
+  const chemKey = `${aId}|${cId}|${eId}`;
+
+  // Rule 2: Non-feasible option in specific form factor -> 0 pts
+  if (roundId === "1" && aId === "fe") {
+    // Hearing Aid: miniature button cell next to ear canal.
+    // Iron anode outgasses H2 in alkaline KOH, building pressure and bursting sealed button cells.
+    return 0;
+  }
+  if (roundId === "5" && (aId === "fe" || cId === "air")) {
+    // Sterile Dose-Tracking Patch: thin flexible skin patch.
+    // Iron anode outgasses H2; Air cathode breathing holes impossible under sealed adhesive bandage on skin.
+    return 0;
+  }
+
+  // Identify client benchmarks
+  let best1 = (round.best1 || "").trim();
+  let best2 = (round.best2 || "").trim();
+  if (!best1 || !best2) {
+    const defSc = DEFAULT_SCENARIOS.find((s) => String(s.id).trim() === roundId);
+    if (defSc) {
+      if (!best1) best1 = (defSc.best1 || "").trim();
+      if (!best2) best2 = (defSc.best2 || "").trim();
+    }
+  }
+
+  // 1. Calculate performance of current cell against client weights
+  const isSecondary = Boolean(round.requireRecharge);
   const effectiveLifespan = isSecondary ? (build.cycleLife || build.lifespan) : (build.shelfLife || build.lifespan);
 
   const n = {
-    energy: Math.min(1, build.energy / 1200),
-    cost: (10 - build.cost) / 7,
-    safety: build.safety / 5,
-    power: build.power / 5,
-    lifespan: effectiveLifespan / 5,
+    energy: Math.min(1.0, build.energy / 1200),
+    cost: Math.max(0.0, (10 - build.cost) / 7),
+    safety: Math.max(0.0, Math.min(1.0, build.safety / 5)),
+    power: Math.max(0.0, Math.min(1.0, build.power / 5)),
+    lifespan: Math.max(0.0, Math.min(1.0, effectiveLifespan / 5)),
   };
+
   const w = round.weights || {};
-  let s = (w.energy || 0) * n.energy + (w.cost || 0) * n.cost + (w.safety || 0) * n.safety + (w.power || 0) * n.power;
-  if (w.lifespan) s += w.lifespan * n.lifespan;
-  let mult = 1;
-  if (round.requireRecharge) {
-    mult = build.rech === "yes" ? 1.0 : build.rech === "poor" ? 0.5 : 0.15;
+  const weightedSum =
+    (w.energy || 0) * n.energy +
+    (w.cost || 0) * n.cost +
+    (w.safety || 0) * n.safety +
+    (w.power || 0) * n.power +
+    (w.lifespan || 0) * n.lifespan;
+
+  const mult = isSecondary ? (build.rech === "yes" ? 1.0 : build.rech === "poor" ? 0.5 : 0.15) : 1.0;
+  const s = weightedSum * mult;
+
+  // 2. Reference performance of the optimal benchmark cell
+  let sOpt = 0.75;
+  if (best1) {
+    const parts = best1.split("|");
+    if (parts.length === 3) {
+      const bOpt = buildCell(parts[0], parts[1], parts[2]);
+      if (bOpt && bOpt.viable) {
+        const nOpt = {
+          energy: Math.min(1.0, bOpt.energy / 1200),
+          cost: Math.max(0.0, (10 - bOpt.cost) / 7),
+          safety: Math.max(0.0, Math.min(1.0, bOpt.safety / 5)),
+          power: Math.max(0.0, Math.min(1.0, bOpt.power / 5)),
+          lifespan: Math.max(0.0, Math.min(1.0, (isSecondary ? bOpt.cycleLife : bOpt.shelfLife) / 5)),
+        };
+        const wOpt =
+          (w.energy || 0) * nOpt.energy +
+          (w.cost || 0) * nOpt.cost +
+          (w.safety || 0) * nOpt.safety +
+          (w.power || 0) * nOpt.power +
+          (w.lifespan || 0) * nOpt.lifespan;
+        const multOpt = isSecondary ? (bOpt.rech === "yes" ? 1.0 : bOpt.rech === "poor" ? 0.5 : 0.15) : 1.0;
+        sOpt = wOpt * multOpt;
+      }
+    }
   }
-  return Math.round(1000 * s * mult);
+
+  const r = sOpt > 0 ? s / sOpt : 0;
+
+  // 3. Discrete Base Score Tiers: 0, 50, 100, 150, 200
+  let baseScore = 0;
+  if (best1 && chemKey === best1) {
+    baseScore = 200;
+  } else if (best2 && chemKey === best2) {
+    baseScore = 150;
+  } else if (r >= 0.90) {
+    baseScore = 150;
+  } else if (r >= 0.70) {
+    baseScore = 100;
+  } else if (r >= 0.45) {
+    baseScore = 50;
+  } else {
+    baseScore = 0;
+  }
+
+  // 4. Benchmark Discovery Bonus (+100 for best1, +50 for best2)
+  let bonus = 0;
+  if (best1 && chemKey === best1) {
+    bonus = 100;
+  } else if (best2 && chemKey === best2) {
+    bonus = 50;
+  }
+
+  return baseScore + bonus;
 }
 
 /**
  * Scores a stored team submission.
  */
 function scoreSubmission(sub, round) {
-  if (!sub) return { pts: 0, summary: "no submission", chem: "no submission" };
+  if (!sub || !sub.aId || !sub.cId || !sub.eId) {
+    return { pts: 0, summary: "no submission (0 pts)", chem: "no submission" };
+  }
   const b = buildCell(sub.aId, sub.cId, sub.eId);
-  if (!b || !b.viable) return { pts: 0, summary: "non-viable cell", chem: "non-viable cell" };
+  if (!b || !b.viable) {
+    return {
+      pts: -100,
+      summary: "non-viable cell (-100 pts) — Chemical or thermodynamic failure",
+      chem: "non-viable cell",
+      famous: null,
+    };
+  }
+
+  const roundId = String(round.id || "").trim();
+  if ((roundId === "1" && b.a.id === "fe") || (roundId === "5" && (b.a.id === "fe" || b.c.id === "air"))) {
+    const chem = `${b.a.name} | ${b.e.short || b.e.name} | ${b.c.name}`;
+    return {
+      pts: 0,
+      summary: `${chem} — Non-feasible form factor (0 pts)`,
+      chem,
+      famous: b.famous,
+    };
+  }
+
   const chem = `${b.a.name} | ${b.e.short || b.e.name} | ${b.c.name}`;
+  const pts = scoreCell(b, round);
   return {
-    pts: scoreCell(b, round),
-    summary: `${chem} — ${b.V.toFixed(2)} V · ${Math.round(b.energy)} Wh/kg`,
+    pts,
+    summary: `${chem} — ${b.V.toFixed(2)} V · ${Math.round(b.energy)} Wh/kg (${pts >= 0 ? "+" + pts : pts} pts)`,
     chem,
     famous: b.famous,
   };
@@ -959,8 +1125,10 @@ function CellDesigner({ round, onSubmit, submitted, onTrace }) {
                 <div className="dock-metric">
                   {build.viable ? `${build.V.toFixed(2)} V · ${Math.round(build.energy)} Wh/kg` : "Non-viable cell ⚠️"}
                 </div>
-                {build.viable && preview !== null && (
-                  <div className="dock-submetric">Score Est.: {preview} pts</div>
+                {build.viable && (
+                  <div className="dock-submetric">
+                    {build.famous ? `★ ${build.famous}` : `${build.a.name} | ${build.c.name}`}
+                  </div>
                 )}
               </>
             ) : (
@@ -983,11 +1151,6 @@ function CellDesigner({ round, onSubmit, submitted, onTrace }) {
               {build.viable && (
                 <>
                   <div className="chip-grid">
-                    <StatChip
-                      label="Score Est."
-                      value={`${preview !== null ? preview : 0} pts`}
-                      good={preview !== null && preview >= 700 ? true : preview !== null && preview < 400 ? false : undefined}
-                    />
                     <StatChip label="Cell voltage" value={`${build.V.toFixed(2)} V`} />
                     <StatChip label="Wh/kg (active)" value={Math.round(build.energy)} />
                     <StatChip label="Cost" value={"$".repeat(build.cost > 6 ? 3 : build.cost > 4 ? 2 : 1) + ` (${build.cost}/10)`} />
@@ -1018,7 +1181,7 @@ function CellDesigner({ round, onSubmit, submitted, onTrace }) {
             disabled={!build || !build.viable || submitted}
             onClick={handleSubmit}
           >
-            {submitted ? "Design locked in 🔒" : preview !== null ? `Submit Design · Est. ${preview} pts` : "Submit"}
+            {submitted ? "Design locked in 🔒" : "Submit Design"}
           </Btn>
         </div>
       </div>
@@ -2246,7 +2409,9 @@ function TeamApp({ session, onUpdateSession, onEndSession }) {
 
         {mine && (
           <div style={{ background: T.panel, border: `2px solid ${T.line}`, borderRadius: 14, padding: "16px 18px", textAlign: "center", marginBottom: 18 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 32, color: mine.last > 0 ? T.volt : T.red }}>+{mine.last}</div>
+            <div style={{ fontFamily: T.mono, fontSize: 32, color: mine.last > 0 ? T.volt : mine.last === 0 ? T.muted : T.red }}>
+              {mine.last > 0 ? `+${mine.last}` : mine.last}
+            </div>
             <div style={{ color: T.muted, marginTop: 4 }}>Total {mine.total} · rank #{rank}</div>
           </div>
         )}

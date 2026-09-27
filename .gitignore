@@ -5,6 +5,7 @@ docs/
 backend/
 tests/
 *.sql
+scoring_grid.md
 
 # Python cache & temporary test artifacts
 __pycache__/
