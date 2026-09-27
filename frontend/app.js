@@ -416,7 +416,7 @@ function buildCell(aId, cId, eId) {
   let rech = "yes";
   if (c.flags.noRecharge) {
     rech = "no";
-    if (cId === "mno2") notes.push("Mn₂O₃ product detaches from electrode — non-rechargeable (Lecture 6). Sloping discharge curve (1.6 V down to 0.9 V).");
+    if (cId === "mno2") notes.push("Mn₂O₃ product detaches from electrode — non-rechargeable. Sloping discharge curve (1.6 V down to 0.9 V).");
     if (cId === "ag2o") notes.push("Primary silver-oxide cell — exceptionally flat 1.55 V two-phase plateau prevents sensor calibration drift.");
   } else if (c.flags.rechargePoor || a.flags.dendrite || c.flags.shuttle) {
     rech = "poor";
