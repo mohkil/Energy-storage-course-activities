@@ -1354,6 +1354,35 @@ function HostApp({ session, onUpdateSession, onEndSession }) {
     setBusy(false);
   };
 
+  const resetActivity = async () => {
+    if (!window.confirm("Are you sure you want to reset the activity? This will return to the Host Setup screen.")) {
+      return;
+    }
+    setBusy(true);
+    if (code) {
+      try {
+        await sSet(K(code, "state"), { phase: "ended" });
+      } catch (e) {
+        console.warn("Could not notify backend of session reset:", e);
+      }
+    }
+    setCode(null);
+    setPresetId(null);
+    setGame(null);
+    setTeams({});
+    setScores({});
+    setSubCount(0);
+    setShowcase(null);
+    setCsvText(null);
+    setCsvNote("");
+    setTraceCsvText(null);
+    setTraceCsvNote("");
+    setLogged(0);
+    setFinalTab("podium");
+    onUpdateSession({ mode: "host", authed: true, hostToken: HOST_TOKEN, code: null, presetId: null });
+    setBusy(false);
+  };
+
   const reveal = async () => {
     setBusy(true);
     const keys = await sList(K(code, "sub", game.roundIdx) + "-");
@@ -1816,9 +1845,12 @@ function HostApp({ session, onUpdateSession, onEndSession }) {
           {round.requireRecharge && <div style={{ color: T.volt, fontSize: 15, marginTop: 8, fontWeight: 600 }}>⚡ Must be rechargeable</div>}
         </div>
 
-        <div style={{ marginTop: 34 }}>
+        <div style={{ marginTop: 34, display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
           <Btn onClick={reveal} disabled={busy} variant="teal">
             Close submissions
+          </Btn>
+          <Btn onClick={resetActivity} disabled={busy} variant="ghost" style={{ borderColor: T.red, color: T.red }}>
+            Reset activity
           </Btn>
         </div>
       </Shell>
